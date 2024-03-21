@@ -21,10 +21,12 @@ public class HelloServlet extends HttpServlet {
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
-            String xString = request.getParameter("x");
-            String yString = request.getParameter("y");
+        String xString = request.getParameter("x");
+        String yString = request.getParameter("y");
+        String playerColor = request.getParameter("playerColor");
 
-            if(xString.equals("no") && yString.equals("no")){
+
+            if((xString.equals("no") && yString.equals("no")) || (!playerColor.equals(this.board.getPlayerInTurn()))){
 
                 response.setContentType("application/json");
                 String json = gson.toJson(board);
