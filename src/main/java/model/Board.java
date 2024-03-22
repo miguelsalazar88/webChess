@@ -86,7 +86,6 @@ public class Board {
 
         String enemyColor = this.playerInTurn.equals("White") ? "Black" : "White";
         Position myKing = this.playerInTurn.equals("White") ? this.whiteKing : this.blackKing;
-        Position enemyKing = this.playerInTurn.equals("White") ? this.blackKing : this.whiteKing;
 
         Piece piece = positions[startRow][startCol];
         if (piece == null) {
@@ -112,15 +111,9 @@ public class Board {
         // If all checks pass, move the piece
         List<Position> ac = calculatorMoves.calculatePlayerMoves(enemyColor, this.positions);
 
-        if (calculatorMoves.jaque(myKing, ac)) {
-            banderaJaque = false;
-        }
 
         //System.out.println("Hay ganador: " + this.hayGanador);
 
-        if (this.hayGanador) {
-            return true;
-        }
 
         Piece deadFlag = positions[destRow][destCol];
 
@@ -149,7 +142,6 @@ public class Board {
         //System.out.println("Pieza movida correctamente.");
 
         return banderaJaque;
-
     }
 
 
@@ -175,30 +167,20 @@ public class Board {
     }
 
     public void setPosition(Position position){
-        if(isStartPositionSet() && !isDestPositionSet()){
+        if(isStartPositionSet() && !isDestPositionSet()) {
 
             this.destPosition = position;
-            if(calculatorMoves.containsPosition(position))
-            {
-                if(movePiece()){
-                    a=this.startPosition;
-                    b=this.destPosition;
-                    if(this.hayGanador)
-                        System.exit(0);
+            if (calculatorMoves.containsPosition(position)) {
+                if (movePiece()) {
+                    a = this.startPosition;
+                    b = this.destPosition;
 
                     checkJaque();
-                    resetPositions();
                     changePlayerInTurn();
                 }
-                else{
-                    resetPositions();
-                }
             }
-            else
-                resetPositions();
-
+            resetPositions();
         }
-
         else if(!isStartPositionSet() && !isEmpty(position) && playerInTurn.equals(getPositionColor(position))){
 
             startPosition = position;
@@ -212,14 +194,46 @@ public class Board {
     public void checkJaque(){
         String mycolor = this.playerInTurn;
         Position enemyKing = this.playerInTurn.equals("White") ? this.blackKing : this.whiteKing;
-        System.out.println(enemyKing);
         //System.out.println("Yo soy" + mycolor);
         List<Position> myPossibleMoves = calculatorMoves.calculatePlayerMoves(mycolor, this.positions);
         if(calculatorMoves.jaque(enemyKing, myPossibleMoves)){
             this.banderaJaque = false;
+            this.hayGanador = checkMate(enemyKing, mycolor);
         }
 
 
+    }
+
+    public boolean checkMate(Position myKing, String enemyColor){
+        //System.out.println("Inicio: Posicion de mi rey"+myKing.toString()+"Me ataca: "+enemyColor);
+        String myColor = enemyColor.equals("White") ? "Black" : "White";
+        //System.out.println("Inicio: Color de mi rey"+myColor);
+
+        Piece[][] tempPositions = clonePositions(positions);
+
+        List<Position> myPieces = this.calculatorMoves.findMyPieces(myColor, tempPositions);
+        //System.out.println("Posiciones de mis piezas"+myPieces);
+
+        for (Position myPiece : myPieces) {
+            List<Position> pieceMoves = calculatorMoves.calculatePieceMoves(myPiece, tempPositions);
+            for (Position movPiece : pieceMoves) {
+                // Create a copy of the current game state
+                Piece[][] temp = tempPositions;
+
+                // Simulate the move
+                Piece movedPiece = temp[myPiece.row][myPiece.col];
+                temp[movPiece.row][movPiece.col] = movedPiece;
+                temp[myPiece.row][myPiece.col] = null;
+
+                List<Position> enemyAtack = calculatorMoves.calculatePlayerMoves(enemyColor, tempPositions);
+
+                if(!calculatorMoves.jaque(myKing, enemyAtack))
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     public String getPositionColor(Position position){
